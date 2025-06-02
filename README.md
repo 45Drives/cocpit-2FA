@@ -1,1 +1,1 @@
-# cockpit-2FA
+# cockpit-2fa

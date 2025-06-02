@@ -1,6 +1,6 @@
 {
     "schema_version": "45D_AP_V2.0",
-    "name": "cockpit-2FA",
+    "name": "cockpit-2fa",
     "title": "2FA module",
     "stable": false,
     "version": "1.0.0",

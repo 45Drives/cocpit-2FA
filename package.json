@@ -1,7 +1,7 @@
 {
   "private": true,
   "workspaces": [
-    "cockpit-2FA",
+    "cockpit-2fa",
     "houston-common",
     "houston-common/houston-common-*"
   ],

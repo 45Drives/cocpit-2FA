@@ -1,5 +1,5 @@
 {
-  "name": "cockpit-2FA",
+  "name": "cockpit-2fa",
   "version": "1.0.2",
   "description": "2FA setup for Cockpit",
   "types": "./src/index.d.ts",

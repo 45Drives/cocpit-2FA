@@ -1,4 +1,4 @@
-cockpit-2FA (1.0.0-1jammy) jammy; urgency=medium
+cockpit-2fa (1.0.0-1jammy) jammy; urgency=medium
 
   * developed module and building package
 
