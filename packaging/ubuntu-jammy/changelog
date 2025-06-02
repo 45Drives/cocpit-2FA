@@ -1,0 +1,5 @@
+cockpit-2FA (1.0.0-1jammy) jammy; urgency=medium
+
+  * developed module and building package
+
+ -- Rachit Hans <rhans@45drives.com>  Mon, 02 Jun 2025 13:08:44 -0300
