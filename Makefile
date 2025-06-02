@@ -13,7 +13,7 @@
 # If not, see <https://www.gnu.org/licenses/>. 
 
 # PLUGIN_SRCS is space-delimited list of subdirectories containg a plugin project.
-PLUGIN_SRCS=cockpit-2FA
+PLUGIN_SRCS=cockpit-2fa
 
 # For installing to a remote machine for testing with `make install-remote`
 REMOTE_TEST_HOST=192.168.207.11
