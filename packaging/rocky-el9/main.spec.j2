@@ -19,6 +19,13 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 PAM_FILE="/etc/pam.d/cockpit"
 PAM_LINE="auth       required pam_google_authenticator.so nullok"
 
-if ! grep -Fxq "$PAM_LINE" "$PAM_FILE"; then
-    echo "$PAM_LINE" >> "$PAM_FILE"
+# Only append if the line isn't already present and the file exists
+if [ -f "$PAM_FILE" ] && [ -w "$PAM_FILE" ]; then
+    if ! grep -Fxq "$PAM_LINE" "$PAM_FILE"; then
+        echo "$PAM_LINE" >> "$PAM_FILE"
+    fi
 fi
+
+%changelog
+* Tue Jun 03 2025 Rachit Hans <rhans@45drives.com> 1.0.0-2
+- added chnage log parameter in spec.j2 files
