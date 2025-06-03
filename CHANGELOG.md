@@ -1,3 +1,3 @@
-## 2FA module 1.0.0-1
+## 2FA module 1.0.0-2
 
-* developed module and building package
+* fixed dependency installation
