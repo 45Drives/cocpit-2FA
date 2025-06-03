@@ -21,7 +21,7 @@
             "cockpit",
             "python3",
             "python3-pip",
-            "libpam-google-authenticator"
+            "google-authenticator"
         ],
         "rocky_common": [
             "cockpit",
