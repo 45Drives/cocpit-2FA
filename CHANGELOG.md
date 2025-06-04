@@ -1,3 +1,3 @@
-## 2FA module 1.0.0-3
+## 2FA module 1.0.0-4
 
-* fixed dependency installation
+* build pacakge + make module under tool section + OS detection

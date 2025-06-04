@@ -2617,9 +2617,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cockpit-2FA@workspace:cockpit-2FA":
+"cockpit-2fa@workspace:cockpit-2fa":
   version: 0.0.0-use.local
-  resolution: "cockpit-2FA@workspace:cockpit-2FA"
+  resolution: "cockpit-2fa@workspace:cockpit-2fa"
   dependencies:
     "@45drives/houston-common-css": "workspace:^"
     "@45drives/houston-common-lib": "workspace:^"
