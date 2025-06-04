@@ -1,8 +1,8 @@
 {
   "version": 1.0,
 
-  "menu": {
-      "zfs": {
+  "tools": {
+      "2fa": {
           "label": "45Drives 2FA",
           "path": "index.html",
           "order": 112

@@ -132,69 +132,140 @@ async function checkExist() {
   }
 }
 
+async function detectOS() {
+  try {
+    const result = await server.execute(new Command(["cat", "/etc/os-release"]), true);
+    const content = new TextDecoder().decode(result.value.stdout);
+    console.log("content os ", content)
+
+    if (/^ID="?rocky"?$/m.test(content)) return "rocky";
+    if (content.includes("ID=ubuntu")) return "ubuntu";
+    if (content.includes("ID=fedora")) return "fedora";
+    if (content.includes("ID=debian")) return "debian";
+
+    return "unknown";
+  } catch (err) {
+    console.warn("⚠️ Could not detect OS:", err);
+    return "unknown";
+  }
+}
 
 async function createAuth() {
   try {
-    const result = await server.execute(
-      new Command([
-        "google-authenticator",
-        "--time-based",
-        "--disallow-reuse",
-        "--rate-limit=3",
-        "--rate-time=30",
-        "--window-size=17",
-        "--no-confirm",
-        "--force"
-      ]),
-      true
-    );
-    // Decode Uint8Array to string
-    const stdoutBytes = result.value.stdout;
-    const stdout = new TextDecoder().decode(stdoutBytes);
-    console.log("Decoded output:", stdout);
+    const os = await detectOS();
+
+    console.log("os ", os)
+
+    const args = [
+      "google-authenticator",
+      "--time-based",
+      "--disallow-reuse",
+      "--rate-limit=3",
+      "--rate-time=30",
+      "--window-size=17",
+      "--force",
+    ];
+
+    if (os === "rocky") {
+      args.push("--no-confirm"); // ✅ Only add for Rocky where it's supported
+    }
+
+    console.log("args, " , args)
+
+    const result = await server.execute(new Command(args), true);
+    console.log("result", result)
+    const stdout = new TextDecoder().decode(result.value.stdout);
 
     // Extract QR URL
-    const qrMatch = stdout.match(
-      /https:\/\/www\.google\.com\/chart\?chs=200x200[^ \n"]+/
-    );
+    const qrMatch = stdout.match(/https:\/\/www\.google\.com\/chart\?chs=200x200[^ \n"]+/);
     const qrUrl = qrMatch?.[0] ?? null;
 
     if (qrUrl) {
-      // Extract the otpauth URI from the 'chl' parameter
       const chlMatch = qrUrl.match(/chl=([^&\n]+)/);
       const encodedOtpauth = chlMatch?.[1];
-
       if (encodedOtpauth) {
-        // Decode it
-        const otpauthUri = decodeURIComponent(encodedOtpauth);
-        console.log("✅ OTP Auth URI:", otpauthUri);
-
-        // Example: use in UI
-        otpUri.value = otpauthUri;
+        otpUri.value = decodeURIComponent(encodedOtpauth);
         extractAccountNameFromURI(otpUri.value);
-      } else {
-        console.warn("⚠️ Couldn't find 'chl=' param in QR URL");
       }
-    } else {
-      console.error("❌ QR URL not found in stdout");
     }
+
+    // Read `.google_authenticator` file
     server
-      .execute(  new Command(["sh", "-c", "cat ~/.google_authenticator"]), true)
+      .execute(new Command(["sh", "-c", "cat ~/.google_authenticator"]), true)
       .map((proc) => {
         const lines = proc.getStdout().split("\n");
-        console.log("lines", lines)
-        secret.value = lines[0]?.trim(); // ✅ Save secret separately
+        secret.value = lines[0]?.trim();
         scratchCodes.value.push(...lines.filter((line) => /^\d{8}$/.test(line.trim())));
       });
 
-      //fetching username and hoste name from 
-    generateQrBtnClicked.value = true
+    generateQrBtnClicked.value = true;
   } catch (e) {
-
-    console.error("Failed to generate OTP:", e);
-    return null;
+    console.error("❌ Failed to generate OTP:", e);
   }
 }
+
+// async function createAuth() {
+//   try {
+//     const result = await server.execute(
+//       new Command([
+//         "google-authenticator",
+//         "--time-based",
+//         "--disallow-reuse",
+//         "--rate-limit=3",
+//         "--rate-time=30",
+//         "--window-size=17",
+//         "--no-confirm",
+//         "--force"
+//       ]),
+//       true
+//     );
+//     // Decode Uint8Array to string
+//     const stdoutBytes = result.value.stdout;
+//     const stdout = new TextDecoder().decode(stdoutBytes);
+//     console.log("Decoded output:", stdout);
+
+//     // Extract QR URL
+//     const qrMatch = stdout.match(
+//       /https:\/\/www\.google\.com\/chart\?chs=200x200[^ \n"]+/
+//     );
+//     const qrUrl = qrMatch?.[0] ?? null;
+
+//     if (qrUrl) {
+//       // Extract the otpauth URI from the 'chl' parameter
+//       const chlMatch = qrUrl.match(/chl=([^&\n]+)/);
+//       const encodedOtpauth = chlMatch?.[1];
+
+//       if (encodedOtpauth) {
+//         // Decode it
+//         const otpauthUri = decodeURIComponent(encodedOtpauth);
+//         console.log("✅ OTP Auth URI:", otpauthUri);
+
+//         // Example: use in UI
+//         otpUri.value = otpauthUri;
+//         extractAccountNameFromURI(otpUri.value);
+//       } else {
+//         console.warn("⚠️ Couldn't find 'chl=' param in QR URL");
+//       }
+//     } else {
+//       console.error("❌ QR URL not found in stdout");
+//     }
+//     server
+//       .execute(  new Command(["sh", "-c", "cat ~/.google_authenticator"]), true)
+//       .map((proc) => {
+//         const lines = proc.getStdout().split("\n");
+//         console.log("lines", lines)
+//         secret.value = lines[0]?.trim(); // ✅ Save secret separately
+//         scratchCodes.value.push(...lines.filter((line) => /^\d{8}$/.test(line.trim())));
+//       });
+
+//       //fetching username and hoste name from 
+//     generateQrBtnClicked.value = true
+//   } catch (e) {
+
+//     console.error("Failed to generate OTP:", e);
+//     return null;
+//   }
+// }
 
 function extractAccountNameFromURI(uri: string) {
   const match = uri.match(/^otpauth:\/\/totp\/([^?]+)/);
