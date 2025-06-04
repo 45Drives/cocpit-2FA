@@ -29,6 +29,11 @@ make DESTDIR=%{buildroot} install
 %dir /usr/share/cockpit
 %dir /usr/share/cockpit/cockpit-2fa
 /usr/share/cockpit/cockpit-2fa/*
+%dir /opt/45drives
+%dir /opt/45drives/houston
+%dir /opt/45drives/houston/2fa
+%dir /opt/45drives/houston/2fa/scripts
+/opt/45drives/houston/2fa/scripts/*
 
 %post
 # Add Google Authenticator PAM line to Cockpit if not already present
