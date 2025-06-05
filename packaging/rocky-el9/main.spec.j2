@@ -33,6 +33,7 @@ make DESTDIR=%{buildroot} install
 %dir /opt/45drives/houston/2fa
 %dir /opt/45drives/houston/2fa/scripts
 /opt/45drives/houston/2fa/scripts/*
+%attr(755, root, root) /opt/45drives/houston/2fa/scripts/log_2fa_removal.sh
 
 
 %post

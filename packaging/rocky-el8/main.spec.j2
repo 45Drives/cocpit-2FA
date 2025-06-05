@@ -26,6 +26,7 @@ make OS_PACKAGE_RELEASE=el8
 make DESTDIR=%{buildroot} install
 
 
+
 %files
 %dir /usr/share/cockpit
 %dir /usr/share/cockpit/cockpit-2fa
@@ -35,6 +36,8 @@ make DESTDIR=%{buildroot} install
 %dir /opt/45drives/houston/2fa
 %dir /opt/45drives/houston/2fa/scripts
 /opt/45drives/houston/2fa/scripts/*
+%attr(755, root, root) /opt/45drives/houston/2fa/scripts/log_2fa_removal.sh
+
 
 
 %post
