@@ -46,15 +46,12 @@ if [ -f "$PAM_FILE" ] && [ -w "$PAM_FILE" ]; then
         echo "$PAM_LINE" >> "$PAM_FILE"
     fi
 fi
-# ✅ Install pyotp using pip3
-if command -v pip3 >/dev/null 2>&1; then
-    echo "📦 Installing pyotp"
-    pip3 install pyotp --break-system-packages --no-deps
-else
-    echo "⚠️ pip3 not found. Skipping pyotp installation."
-fi
+pip3 install pyotp
+
 
 %changelog
+* Thu Jun 05 2025 Rachit Hans <rhans@45drives.com> 1.0.0-9
+- fixing package dependendy installation
 * Thu Jun 05 2025 Rachit Hans <rhans@45drives.com> 1.0.0-8
 - fixing package dependendy installation
 * Thu Jun 05 2025 Rachit Hans <rhans@45drives.com> 1.0.0-7
