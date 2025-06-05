@@ -1,3 +1,3 @@
-## 2FA module 1.0.0-4
+## 2FA module 1.0.0-5
 
-* build pacakge + make module under tool section + OS detection
+* build package + added verification code logic

@@ -1,3 +1,9 @@
+cockpit-2fa (1.0.0-5bookworm) bookworm; urgency=medium
+
+  * build package + added verification code logic
+
+ -- Rachit Hans <rhans@45drives.com>  Thu, 05 Jun 2025 09:08:52 -0300
+
 cockpit-2fa (1.0.0-4bookworm) bookworm; urgency=medium
 
   * build pacakge + make module under tool section + OS detection
