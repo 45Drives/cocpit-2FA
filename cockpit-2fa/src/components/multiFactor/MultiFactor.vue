@@ -14,13 +14,14 @@
               below.
             </p>
             <p class="mb-4 text-base">To reset 2FA, you must remove it first.</p>
-
-            <button
-              class="bg-red-600 hover:bg-red-700 mt-[2rem] text-white font-semibold py-2 px-4 rounded shadow"
-              @click="confirmRemove()"
-            >
-              Remove 2FA
-            </button>
+            <div class="text-center">
+              <button
+                class="bg-red-600 hover:bg-red-700 mt-[2rem] text-white font-semibold py-2 px-4 rounded shadow"
+                @click="confirmRemove()"
+              >
+                Remove 2FA
+              </button>
+            </div>
           </div>
 
           <div v-else>
@@ -115,11 +116,26 @@
                     {{ code }}
                   </li>
                 </ul>
+                <div class="text-center">
+                  <button
+                    class="bg-red-600 hover:bg-red-700 mt-[2rem] text-white font-semibold py-2 px-4 rounded shadow"
+                    @click="confirmRemove()"
+                  >
+                    Remove 2FA
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+      <alertModal
+        :show="showModal"
+        :title="modalTitle"
+        :confirmButtonText="confirmText"
+        :message="modalMessage"
+        @confirm="handleConfirm"
+      ></alertModal>
     </div>
   </div>
 </template>
@@ -129,7 +145,8 @@ import QrcodeVue from "qrcode.vue";
 import { Command, legacy } from "@45drives/houston-common-lib";
 import { onMounted, ref } from "vue";
 import { server } from "@45drives/houston-common-lib";
-
+import { confirm } from "@45drives/houston-common-ui";
+import alertModal from "../modal/alertModal.vue";
 const otpUri = ref("");
 const secret = ref("");
 const scratchCodes = ref<string[]>([]);
@@ -138,6 +155,12 @@ const loaded = ref(false);
 const generateQrBtnClicked = ref(false);
 const userInput = ref("");
 const accountName = ref("");
+const modalTitle = ref("Default Title");
+const modalMessage = ref("Default message.");
+const confirmText = ref("Continue");
+const showModal = ref(false);
+const fileGenerated = ref(false);
+const verified = ref(false);
 checkExist().then(() => {
   loaded.value = true;
 });
@@ -145,25 +168,29 @@ checkExist().then(() => {
 async function checkExist() {
   try {
     const result = await server.execute(
-      new Command(["sh", "-c", "cat ~/.google_authenticator"]),
+      new Command([
+        "sh",
+        "-c",
+        "test -f ~/.google_authenticator && cat ~/.google_authenticator || echo ''",
+      ]),
       true
     );
 
-    const output = result.value.getStdout().trim(); // Trim to remove newlines/spaces
-    if (output.length > 0) {
+    const stdout = new TextDecoder().decode(result.value.stdout).trim();
+
+    if (stdout.length > 0) {
       codeGenrated.value = true;
-      console.log(" File exists and contains content");
+      console.log("✅ .google_authenticator file exists and has content.");
       return true;
     } else {
       codeGenrated.value = false;
-
-      console.warn("⚠️ File is empty or does not contain useful data");
+      console.warn("⚠️ .google_authenticator file does not exist or is empty.");
       return false;
     }
   } catch (error) {
+    // Only log truly unexpected errors
+    console.error("❌ Unexpected error checking .google_authenticator:", error);
     codeGenrated.value = false;
-
-    console.error("❌ Failed to read .google_authenticator file:", error);
     return false;
   }
 }
@@ -183,9 +210,16 @@ async function generateFile() {
 
   if (res.status === "success") {
     scratchCodes.value = res.scratch_codes;
-    alert("✅ 2FA enabled. Save your recovery codes.");
+    fileGenerated.value = true;
+
+    // alert("✅ 2FA enabled. Save your recovery codes.");
   } else {
-    alert("❌ Failed: " + res.message);
+    const proceed = await confirm({
+      body: " Failed to Enable 2FA",
+      header: "❌ 2FA Failed.",
+      confirmButtonText: "Ok",
+    }).unwrapOr(false);
+    // alert("❌ Failed: " + res.message);
   }
 }
 
@@ -208,19 +242,32 @@ async function verifyCode(userInput) {
     const res = JSON.parse(stdout);
 
     if (res.status === "valid") {
+      verified.value = true;
       // ✅ TOTP is correct
-      alert("✅ 2FA code verified successfully!");
-      console.log("secret value, ", secret.value);
-      generateFile();
+      modalTitle.value = "✅ Verified";
+      modalMessage.value =
+        "Two-Factor Authentication has been successfully enabled.\n\nYou will now be shown your one-time recovery codes.\nPlease save them immediately — they will not be shown again.";
+      confirmText.value = "Ok";
+      showModal.value = true;
+
       // TODO: call backend to save `.google_authenticator` file or mark setup complete
     } else if (res.status === "invalid") {
-      alert("❌ Invalid 2FA code. Please try again.");
+      modalTitle.value = "❌ Invalid code";
+      modalMessage.value = "Invalid 2FA code. Please try again.";
+      confirmText.value = "Ok";
+      showModal.value = true;
     } else {
-      alert("⚠️ Verification error: " + (res.message || "Unknown issue."));
+      modalTitle.value = "⚠️ Verification error: ";
+      modalMessage.value = "⚠️ Verification error: " + (res.message || "Unknown issue.");
+      confirmText.value = "Ok";
+      showModal.value = true;
     }
   } catch (error) {
+    modalTitle.value = "❌ Error verifying TOTP:";
+    (modalMessage.value = " Error verifying TOTP:"), error;
+    confirmText.value = "Ok";
+    showModal.value = true;
     console.error("❌ Error verifying TOTP:", error);
-    alert("An error occurred during verification.");
   }
 }
 
@@ -244,8 +291,24 @@ async function createAuth() {
   }
 }
 
-function confirmRemove() {
-  if (confirm("Are you sure you want to remove 2FA for this account?")) {
+function handleConfirm() {
+  console.log("Confirmed:", modalTitle.value);
+  showModal.value = false;
+  if (verified.value && !fileGenerated.value) {
+    console.log("🚀 Generating file after user clicked OK");
+    generateFile();
+  }
+  verified.value = false;
+}
+
+async function confirmRemove() {
+  const proceed = await confirm({
+    body: "Are you sure you want to remove 2FA for this account?",
+    header: "Remove 2FA",
+    confirmButtonText: "Yes",
+    cancelButtonText: "Cancel",
+  }).unwrapOr(false);
+  if (proceed) {
     remove2FA();
   }
 }
@@ -255,6 +318,19 @@ async function remove2FA() {
     new Command(["sh", "-c", "rm -f ~/.google_authenticator"]),
     true
   );
+  otpUri.value = "";
+  secret.value = "";
+  scratchCodes.value = [];
   codeGenrated.value = false;
+  loaded.value = true; // Keep this true to avoid re-check loop
+  generateQrBtnClicked.value = false;
+  userInput.value = "";
+  accountName.value = "";
+  modalTitle.value = "Default Title";
+  modalMessage.value = "Default message.";
+  confirmText.value = "Continue";
+  showModal.value = false;
+  fileGenerated.value = false;
+  verified.value = false;
 }
 </script>
