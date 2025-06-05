@@ -1,3 +1,9 @@
+cockpit-2fa (1.0.0-10focal) focal; urgency=medium
+
+  * fixing package dependendy installation
+
+ -- Rachit Hans <rhans@45drives.com>  Thu, 05 Jun 2025 10:44:00 -0300
+
 cockpit-2fa (1.0.0-9focal) focal; urgency=medium
 
   * fixing package dependendy installation

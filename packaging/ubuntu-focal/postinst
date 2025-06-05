@@ -10,4 +10,7 @@ if [ -w "$PAM_FILE" ]; then
     fi
 fi
 
+pip3 install pyotp
+
 exit 0
+
