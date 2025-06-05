@@ -22,7 +22,6 @@ make OS_PACKAGE_RELEASE=el9
 
 %install
 make DESTDIR=%{buildroot} install
-pip3 install pyotp --root=%{buildroot} --no-deps
 
 
 %files
