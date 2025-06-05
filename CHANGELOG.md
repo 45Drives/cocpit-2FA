@@ -1,3 +1,3 @@
-## 2FA module 1.0.0-6
+## 2FA module 1.0.0-7
 
 * fixing package dependendy installation
