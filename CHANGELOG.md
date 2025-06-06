@@ -1,3 +1,3 @@
-## 2FA module 1.1.0-1
+## 2FA module 1.1.0-2
 
-* screen for root to see 2fa enabled users
+* added select users method and fixed logs

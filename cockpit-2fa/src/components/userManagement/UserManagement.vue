@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-if="!checkingRoot">
     <div v-if="isRoot" class="ml-[10px] p-[8px] mt-[2rem]">
       <div
         class="centered-column p-well space-y-well bg-accent rounded-md border border-default"
@@ -8,14 +8,34 @@
           <h2 class="text-2xl font-bold text-default">Users with 2FA Enabled</h2>
         </div>
 
-        <div class="flex justify-end mb-[4rem]">
-          <button
-            class="btn btn-danger"
-            @click="confirmRemoveAll"
-            :disabled="usersWith2FA.length === 0"
-          >
-            Remove 2FA for All Users
-          </button>
+        <div class="flex justify-between items-center mb-6">
+          <div>
+            <input
+              type="checkbox"
+              id="selectAll"
+              v-model="selectAll"
+              @change="toggleSelectAll"
+              class="mr-2"
+            />
+            <label for="selectAll" class="text-default">Select All</label>
+          </div>
+
+          <div class="space-x-4">
+            <button
+              class="btn bg-red-600"
+              :disabled="selectedUsers.length === 0"
+              @click="confirmRemoveSelected"
+            >
+              Remove Selected
+            </button>
+            <button
+              class="btn bg-red-600"
+              @click="confirmRemoveAll"
+              :disabled="usersWith2FA.length === 0"
+            >
+              Remove 2FA for All Users
+            </button>
+          </div>
         </div>
 
         <ul v-if="usersWith2FA.length > 0" class="space-y-4">
@@ -24,8 +44,11 @@
             :key="user"
             class="flex justify-between items-center p-4 border rounded shadow"
           >
-            <span class="text-default font-semibold">{{ user }}</span>
-            <button class="btn btn-danger" @click="confirmRemove(user)">
+            <div class="flex items-center">
+              <input type="checkbox" :value="user" v-model="selectedUsers" class="mr-4" />
+              <span class="text-default font-semibold">{{ user }}</span>
+            </div>
+            <button class="btn bg-red-600" @click="confirmRemove(user)">
               Remove 2FA
             </button>
           </li>
@@ -50,7 +73,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { Command, server } from "@45drives/houston-common-lib";
 import { confirm } from "@45drives/houston-common-ui";
 import alertModal from "../modal/alertModal.vue";
@@ -60,10 +83,11 @@ const modalTitle = ref("");
 const modalMessage = ref("");
 const confirmText = ref("OK");
 const showModal = ref(false);
-
+const selectedUsers = ref<string[]>([]);
+const selectAll = ref(false);
 // Fetch users with .google_authenticator files on mount
 const isRoot = ref(false);
-
+const checkingRoot = ref(true);
 onMounted(async () => {
   try {
     const result = await server.execute(new Command(["whoami"]), true);
@@ -75,9 +99,10 @@ onMounted(async () => {
   } catch (error) {
     console.error("Error checking current user:", error);
     isRoot.value = false;
+  } finally {
+    checkingRoot.value = false;
   }
 });
-
 async function fetchUsersWith2FA() {
   try {
     const result = await server.execute(
@@ -158,13 +183,21 @@ async function confirmRemoveAll() {
 
 async function remove2FAForAll() {
   try {
+    const actorResult = await server.execute(new Command(["whoami"]), true);
+    const actor = new TextDecoder().decode(actorResult.value.stdout).trim();
+
     for (const user of usersWith2FA.value) {
       const homeDir = user === "root" ? "/root" : `/home/${user}`;
       await server.execute(
-        new Command(["sh", "-c", `rm -f ${homeDir}/.google_authenticator`]),
+        new Command([
+          "sh",
+          "-c",
+          `rm -f ${homeDir}/.google_authenticator && /opt/45drives/houston/2fa/scripts/log_2fa_removal.sh ${user} ${actor}`,
+        ]),
         true
       );
     }
+
     modalTitle.value = "✅ All 2FA Removed";
     modalMessage.value = "2FA has been removed for all listed users.";
     showModal.value = true;
@@ -176,6 +209,68 @@ async function remove2FAForAll() {
     console.error("Bulk removal failed:", error);
   }
 }
+
+function toggleSelectAll() {
+  if (selectAll.value) {
+    selectedUsers.value = [...usersWith2FA.value];
+  } else {
+    selectedUsers.value = [];
+  }
+}
+
+async function confirmRemoveSelected() {
+  const proceed = await confirm({
+    body: `Remove 2FA for the selected users: ${selectedUsers.value.join(", ")}?`,
+    header: "Confirm Bulk Removal",
+    confirmButtonText: "Yes, remove",
+    cancelButtonText: "Cancel",
+  }).unwrapOr(false);
+
+  if (proceed) {
+    await remove2FAForSelected();
+  }
+}
+
+async function remove2FAForSelected() {
+  try {
+    const actorResult = await server.execute(new Command(["whoami"]), true);
+    const actor = new TextDecoder().decode(actorResult.value.stdout).trim();
+
+    for (const user of selectedUsers.value) {
+      const homeDir = user === "root" ? "/root" : `/home/${user}`;
+      await server.execute(
+        new Command([
+          "sh",
+          "-c",
+          `rm -f ${homeDir}/.google_authenticator && /opt/45drives/houston/2fa/scripts/log_2fa_removal.sh ${user} ${actor}`,
+        ]),
+        true
+      );
+    }
+
+    modalTitle.value = "✅ 2FA Removed";
+    modalMessage.value = `2FA removed for selected users.`;
+    showModal.value = true;
+    selectedUsers.value = [];
+    selectAll.value = false;
+    await fetchUsersWith2FA();
+  } catch (error) {
+    modalTitle.value = "❌ Error";
+    modalMessage.value = `Failed to remove 2FA for selected users.`;
+    showModal.value = true;
+    console.error("Error in batch removal:", error);
+  }
+}
+
+watch([selectedUsers, usersWith2FA], () => {
+  // If all users are selected, set selectAll to true; otherwise, false
+  const allSelected =
+    usersWith2FA.value.length > 0 &&
+    selectedUsers.value.length === usersWith2FA.value.length &&
+    usersWith2FA.value.every((user) => selectedUsers.value.includes(user));
+
+  selectAll.value = allSelected;
+});
 
 function handleConfirm() {
   showModal.value = false;
