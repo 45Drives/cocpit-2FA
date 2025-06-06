@@ -147,20 +147,37 @@ import { onMounted, ref } from "vue";
 import { server } from "@45drives/houston-common-lib";
 import { confirm } from "@45drives/houston-common-ui";
 import alertModal from "../modal/alertModal.vue";
-const otpUri = ref("");
-const secret = ref("");
-const scratchCodes = ref<string[]>([]);
-const codeGenrated = ref(false);
+import {
+  otpUri,
+  secret,
+  scratchCodes,
+  codeGenrated,
+  generateQrBtnClicked,
+  userInput,
+  accountName,
+  modalTitle,
+  modalMessage,
+  confirmText,
+  showModal,
+  fileGenerated,
+  verified,
+  reset2FAState,
+} from "../../types/index";
+// const otpUri = ref("");
+// const secret = ref("");
+// const scratchCodes = ref<string[]>([]);
+// const codeGenrated = ref(false);
 const loaded = ref(false);
-const generateQrBtnClicked = ref(false);
-const userInput = ref("");
-const accountName = ref("");
-const modalTitle = ref("Default Title");
-const modalMessage = ref("Default message.");
-const confirmText = ref("Continue");
-const showModal = ref(false);
-const fileGenerated = ref(false);
-const verified = ref(false);
+// const generateQrBtnClicked = ref(false);
+// const userInput = ref("");
+// const accountName = ref("");
+// const modalTitle = ref("Default Title");
+// const modalMessage = ref("Default message.");
+// const confirmText = ref("Continue");
+// const showModal = ref(false);
+// const fileGenerated = ref(false);
+// const verified = ref(false);
+
 checkExist().then(() => {
   loaded.value = true;
 });
@@ -318,19 +335,6 @@ async function remove2FA() {
     new Command(["sh", "-c", "rm -f ~/.google_authenticator"]),
     true
   );
-  otpUri.value = "";
-  secret.value = "";
-  scratchCodes.value = [];
-  codeGenrated.value = false;
-  loaded.value = true; // Keep this true to avoid re-check loop
-  generateQrBtnClicked.value = false;
-  userInput.value = "";
-  accountName.value = "";
-  modalTitle.value = "Default Title";
-  modalMessage.value = "Default message.";
-  confirmText.value = "Continue";
-  showModal.value = false;
-  fileGenerated.value = false;
-  verified.value = false;
+  reset2FAState();
 }
 </script>

@@ -4,7 +4,7 @@
     "title": "2FA module",
     "stable": false,
     "version": "1.1.0",
-    "build_number": "2",
+    "build_number": "3",
     "author": "Rachit Hans <rhans@45drives.com>",
     "git_url": "https://github.com/45Drives/cockpit-zfs-45d",
     "license": "GPL-3.0+",
@@ -64,7 +64,7 @@
     "changelog": {
         "urgency": "medium",
         "version": "1.1.0",
-        "build_number": "2",
+        "build_number": "3",
         "date": null,
         "packager": "Rachit Hans <rhans@45drives.com>",
         "changes": []

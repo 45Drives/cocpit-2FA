@@ -77,12 +77,14 @@ import { ref, onMounted, watch } from "vue";
 import { Command, server } from "@45drives/houston-common-lib";
 import { confirm } from "@45drives/houston-common-ui";
 import alertModal from "../modal/alertModal.vue";
-
+import {
+  modalTitle,
+  modalMessage,
+  confirmText,
+  showModal,
+  reset2FAState,
+} from "../../types/index";
 const usersWith2FA = ref<string[]>([]);
-const modalTitle = ref("");
-const modalMessage = ref("");
-const confirmText = ref("OK");
-const showModal = ref(false);
 const selectedUsers = ref<string[]>([]);
 const selectAll = ref(false);
 // Fetch users with .google_authenticator files on mount
@@ -140,25 +142,38 @@ async function confirmRemove(user: string) {
 async function remove2FA(user: string) {
   try {
     const homeDir = user === "root" ? "/root" : `/home/${user}`;
+
+    // Remove the file
     await server.execute(
       new Command(["sh", "-c", `rm -f ${homeDir}/.google_authenticator`]),
       true
     );
+
+    // Set UI state
     modalTitle.value = "✅ 2FA Removed";
     modalMessage.value = `2FA has been removed for user: ${user}`;
     showModal.value = true;
+
+    // Log the actor
     const actorResult = await server.execute(new Command(["whoami"]), true);
     const actor = new TextDecoder().decode(actorResult.value.stdout).trim();
 
+    // Log the removal
     await server.execute(
       new Command([
         "sh",
         "-c",
-        `rm -f ${homeDir}/.google_authenticator && /opt/45drives/houston/2fa/scripts/log_2fa_removal.sh ${user} ${actor}`,
+        `/opt/45drives/houston/2fa/scripts/log_2fa_removal.sh ${user} ${actor}`,
       ]),
       true
     );
 
+    // If the removed user is root, reset shared UI state
+    if (user === "root") {
+      reset2FAState();
+    }
+
+    // Refresh user list
     await fetchUsersWith2FA();
   } catch (error) {
     modalTitle.value = "❌ Error";

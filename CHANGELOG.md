@@ -1,3 +1,3 @@
-## 2FA module 1.1.0-2
+## 2FA module 1.1.0-3
 
-* added select users method and fixed logs
+* fixed state change of root on 2fa removal
