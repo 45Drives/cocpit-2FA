@@ -193,6 +193,7 @@ async function confirmRemoveAll() {
 
   if (proceed) {
     await remove2FAForAll();
+    reset2FAState();
   }
 }
 

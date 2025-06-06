@@ -1,3 +1,9 @@
+cockpit-2fa (1.1.0-4jammy) jammy; urgency=medium
+
+  * fixed state change of root on 2fa removal
+
+ -- Rachit Hans <rhans@45drives.com>  Fri, 06 Jun 2025 14:27:57 -0300
+
 cockpit-2fa (1.1.0-3jammy) jammy; urgency=medium
 
   * fixed state change of root on 2fa removal
