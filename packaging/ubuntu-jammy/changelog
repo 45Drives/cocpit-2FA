@@ -1,3 +1,9 @@
+cockpit-2fa (1.1.0-1jammy) jammy; urgency=medium
+
+  * screen for root to see 2fa enabled users
+
+ -- Rachit Hans <rhans@45drives.com>  Fri, 06 Jun 2025 07:33:38 -0300
+
 cockpit-2fa (1.0.0-10jammy) jammy; urgency=medium
 
   * fixing package dependendy installation

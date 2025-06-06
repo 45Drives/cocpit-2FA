@@ -17,7 +17,7 @@ PLUGIN_SRCS=cockpit-2fa
 
 # For installing to a remote machine for testing with `make install-remote`
 REMOTE_TEST_HOST=192.168.207.11
-REMOTE_TEST_USER=hans
+REMOTE_TEST_USER=root
 
 # Restarts cockpit after install
 RESTART_COCKPIT?=0
