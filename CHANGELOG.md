@@ -1,3 +1,3 @@
-## 2FA module 1.1.0-4
+## 2FA module 1.1.0-5
 
-* fixed state change of root on 2fa removal
+* build pacakge + added list of users without 2fa

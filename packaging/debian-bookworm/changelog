@@ -1,3 +1,9 @@
+cockpit-2fa (1.1.0-5bookworm) bookworm; urgency=medium
+
+  * build pacakge + added list of users without 2fa
+
+ -- Rachit Hans <rhans@45drives.com>  Mon, 09 Jun 2025 08:32:52 -0300
+
 cockpit-2fa (1.1.0-4bookworm) bookworm; urgency=medium
 
   * fixed state change of root on 2fa removal

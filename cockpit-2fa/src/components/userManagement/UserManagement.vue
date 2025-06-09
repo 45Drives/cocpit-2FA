@@ -1,62 +1,103 @@
 <template>
+  <div v-if="checkingRoot" class="flex justify-center items-center h-[60vh]">
+    <LoadingSpinner class="w-24 h-24"></LoadingSpinner>
+  </div>
   <div v-if="!checkingRoot">
     <div v-if="isRoot" class="ml-[10px] p-[8px] mt-[2rem]">
       <div
         class="centered-column p-well space-y-well bg-accent rounded-md border border-default"
       >
-        <div class="text-center mb-6">
-          <h2 class="text-2xl font-bold text-default">Users with 2FA Enabled</h2>
-        </div>
-
-        <div class="flex justify-between items-center mb-6">
-          <div>
-            <input
-              type="checkbox"
-              id="selectAll"
-              v-model="selectAll"
-              @change="toggleSelectAll"
-              class="mr-2"
-            />
-            <label for="selectAll" class="text-default">Select All</label>
+        <!-- ✅ USERS WITH 2FA ENABLED -->
+        <div class="border rounded-md p-6 mb-[5rem] shadow-inner">
+          <div class="text-center mb-6">
+            <h2 class="text-2xl font-bold text-default">✅ Users with 2FA Enabled</h2>
+            <p class="text-green-600 text-sm mt-2">
+              These users have completed 2FA setup.
+            </p>
           </div>
 
-          <div class="space-x-4">
-            <button
-              class="btn bg-red-600"
-              :disabled="selectedUsers.length === 0"
-              @click="confirmRemoveSelected"
-            >
-              Remove Selected
-            </button>
-            <button
-              class="btn bg-red-600"
-              @click="confirmRemoveAll"
-              :disabled="usersWith2FA.length === 0"
-            >
-              Remove 2FA for All Users
-            </button>
-          </div>
-        </div>
-
-        <ul v-if="usersWith2FA.length > 0" class="space-y-4">
-          <li
-            v-for="user in usersWith2FA"
-            :key="user"
-            class="flex justify-between items-center p-4 border rounded shadow"
-          >
-            <div class="flex items-center">
-              <input type="checkbox" :value="user" v-model="selectedUsers" class="mr-4" />
-              <span class="text-default font-semibold">{{ user }}</span>
+          <div class="flex justify-between items-center mb-6">
+            <div>
+              <input
+                type="checkbox"
+                id="selectAll"
+                v-model="selectAll"
+                @change="toggleSelectAll"
+                class="mr-2"
+              />
+              <label for="selectAll" class="text-default font-medium">Select All</label>
             </div>
-            <button class="btn bg-red-600" @click="confirmRemove(user)">
-              Remove 2FA
-            </button>
-          </li>
-        </ul>
 
-        <p v-else class="text-center text-default">No users have 2FA enabled.</p>
+            <div class="space-x-4">
+              <button
+                class="btn bg-red-600 hover:bg-red-700 text-white"
+                :disabled="selectedUsers.length === 0"
+                @click="confirmRemoveSelected"
+              >
+                Remove Selected
+              </button>
+              <button
+                class="btn bg-red-600 hover:bg-red-700 text-white"
+                @click="confirmRemoveAll"
+                :disabled="usersWith2FA.length === 0"
+              >
+                Remove 2FA for All Users
+              </button>
+            </div>
+          </div>
+
+          <ul v-if="usersWith2FA.length > 0" class="mt-[2rem]">
+            <li
+              v-for="user in usersWith2FA"
+              :key="user"
+              class="flex justify-between items-center py-4 px-2 border-b"
+            >
+              <div class="flex items-center">
+                <input
+                  type="checkbox"
+                  :value="user"
+                  v-model="selectedUsers"
+                  class="mr-4"
+                />
+                <span class="text-default font-semibold">{{ user }}</span>
+              </div>
+              <button
+                class="btn bg-red-600 hover:bg-red-700 text-white"
+                @click="confirmRemove(user)"
+              >
+                Remove 2FA
+              </button>
+            </li>
+          </ul>
+          <p v-else class="text-center text-red-600">
+            No users currently have 2FA enabled.
+          </p>
+        </div>
+
+        <!-- ❌ USERS WITHOUT 2FA -->
+        <div class="border rounded-md p-6 shadow-inner">
+          <div class="text-center mb-6">
+            <h2 class="text-2xl font-bold text-default">⚠️ Users Without 2FA</h2>
+            <p class="text-yellow-600 text-sm mt-2">
+              These users have not yet enabled 2FA.
+            </p>
+          </div>
+
+          <ul v-if="usersWithout2FA.length > 0" class="space-y-4">
+            <li
+              v-for="user in usersWithout2FA"
+              :key="user"
+              class="p-4 border-b shadow text-default font-medium"
+            >
+              {{ user }}
+            </li>
+          </ul>
+
+          <p v-else class="text-center text-green-600">All users have 2FA enabled.</p>
+        </div>
       </div>
 
+      <!-- Confirmation Modal -->
       <alertModal
         :show="showModal"
         :title="modalTitle"
@@ -75,7 +116,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from "vue";
 import { Command, server } from "@45drives/houston-common-lib";
-import { confirm } from "@45drives/houston-common-ui";
+import { confirm, LoadingSpinner } from "@45drives/houston-common-ui";
 import alertModal from "../modal/alertModal.vue";
 import {
   modalTitle,
@@ -84,12 +125,14 @@ import {
   showModal,
   reset2FAState,
 } from "../../types/index";
-const usersWith2FA = ref<string[]>([]);
 const selectedUsers = ref<string[]>([]);
 const selectAll = ref(false);
 // Fetch users with .google_authenticator files on mount
 const isRoot = ref(false);
 const checkingRoot = ref(true);
+const usersWith2FA = ref<string[]>([]);
+const usersWithout2FA = ref<string[]>([]);
+
 onMounted(async () => {
   try {
     const result = await server.execute(new Command(["whoami"]), true);
@@ -112,16 +155,47 @@ async function fetchUsersWith2FA() {
         "bash",
         "-c",
         `
-        for user in $(awk -F: '$3 >= 1000 { print $1 }' /etc/passwd); do
-          if [ -f /home/$user/.google_authenticator ]; then echo $user; fi
+        all_users=$(awk -F: '$3 >= 1000 { print $1 }' /etc/passwd)
+        with_2fa=()
+        without_2fa=()
+
+        for user in $all_users; do
+          if [ -f /home/$user/.google_authenticator ]; then
+            with_2fa+=($user)
+          else
+            without_2fa+=($user)
+          fi
         done
-        if [ -f /root/.google_authenticator ]; then echo root; fi
+
+        if [ -f /root/.google_authenticator ]; then
+          with_2fa+=("root")
+        else
+          without_2fa+=("root")
+        fi
+
+        echo "WITH_2FA:\${with_2fa[*]}"
+        echo "WITHOUT_2FA:\${without_2fa[*]}"
         `,
       ]),
       true
     );
+
     const output = new TextDecoder().decode(result.value.stdout).trim();
-    usersWith2FA.value = output.split("\n").filter(Boolean);
+    const lines = output.split("\n");
+
+    const withLine = lines.find((line) => line.startsWith("WITH_2FA:")) || "";
+    const withoutLine = lines.find((line) => line.startsWith("WITHOUT_2FA:")) || "";
+
+    usersWith2FA.value = withLine
+      .replace("WITH_2FA:", "")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+    usersWithout2FA.value = withoutLine
+      .replace("WITHOUT_2FA:", "")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
   } catch (error) {
     console.error("Failed to fetch 2FA users:", error);
   }
