@@ -155,7 +155,7 @@ async function fetchUsersWith2FA() {
         "bash",
         "-c",
         `
-        all_users=$(awk -F: '$3 >= 1000 { print $1 }' /etc/passwd)
+        all_users=$(awk -F: '$3 >= 1000 && $1 != "nobody" { print $1 }' /etc/passwd)
         with_2fa=()
         without_2fa=()
 
@@ -191,6 +191,7 @@ async function fetchUsersWith2FA() {
       .trim()
       .split(/\s+/)
       .filter(Boolean);
+
     usersWithout2FA.value = withoutLine
       .replace("WITHOUT_2FA:", "")
       .trim()

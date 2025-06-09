@@ -1,3 +1,3 @@
-## 2FA module 1.1.0-5
+## 2FA module 1.1.0-6
 
-* build pacakge + added list of users without 2fa
+* build pacakge + removed user nobody from list
