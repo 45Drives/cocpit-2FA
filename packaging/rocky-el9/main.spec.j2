@@ -49,8 +49,18 @@ if [ -f "$PAM_FILE" ] && [ -w "$PAM_FILE" ]; then
 fi
 pip3 install pyotp
 
+%postun
+PAM_FILE="/etc/pam.d/cockpit"
+PAM_LINE="auth       required pam_google_authenticator.so nullok"
+
+if [ -f "$PAM_FILE" ]; then
+    grep -Fxq "$PAM_LINE" "$PAM_FILE" && sed -i "\|$PAM_LINE|d" "$PAM_FILE"
+fi
+
 
 %changelog
+* Wed Jun 11 2025 Rachit Hans <rhans@45drives.com> 1.1.0-7
+- build pacakge + remove googleautheticator from pam file
 * Mon Jun 09 2025 Rachit Hans <rhans@45drives.com> 1.1.0-6
 - build pacakge + removed user nobody from list
 * Mon Jun 09 2025 Rachit Hans <rhans@45drives.com> 1.1.0-5
