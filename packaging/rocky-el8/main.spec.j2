@@ -59,12 +59,18 @@ pip3 install pyotp
 PAM_FILE="/etc/pam.d/cockpit"
 PAM_LINE="auth       required pam_google_authenticator.so nullok"
 
+# Remove the PAM line if it exists
 if [ -f "$PAM_FILE" ]; then
     grep -Fxq "$PAM_LINE" "$PAM_FILE" && sed -i "\|$PAM_LINE|d" "$PAM_FILE"
 fi
 
+# Remove .google_authenticator files from all users
+find /home /root -name ".google_authenticator" -exec rm -f {} \; 2>/dev/null
+
 
 %changelog
+* Thu Jun 12 2025 Rachit Hans <rhans@45drives.com> 1.1.0-8
+- build pacakge + remove googleautheticator files from all users
 * Wed Jun 11 2025 Rachit Hans <rhans@45drives.com> 1.1.0-7
 - build pacakge + remove googleautheticator from pam file
 * Mon Jun 09 2025 Rachit Hans <rhans@45drives.com> 1.1.0-6

@@ -1,3 +1,9 @@
+cockpit-2fa (1.1.0-8bookworm) bookworm; urgency=medium
+
+  * build pacakge + remove googleautheticator files from all users
+
+ -- Rachit Hans <rhans@45drives.com>  Thu, 12 Jun 2025 13:27:17 -0300
+
 cockpit-2fa (1.1.0-7bookworm) bookworm; urgency=medium
 
   * build pacakge + remove googleautheticator from pam file
