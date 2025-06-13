@@ -4,7 +4,7 @@ set -e
 PAM_FILE="/etc/pam.d/cockpit"
 PAM_LINE="auth       required pam_google_authenticator.so nullok"
 
-echo "🔍 Checking PAM configuration..."
+echo "Checking PAM configuration..."
 
 # Remove the PAM line if it exists
 if [ -f "$PAM_FILE" ]; then
@@ -22,7 +22,7 @@ echo "Searching for .google_authenticator files..."
 FOUND_FILES=$(find /home /root -name ".google_authenticator" 2>/dev/null)
 
 if [ -n "$FOUND_FILES" ]; then
-    echo "🧹 Removing .google_authenticator files:"
+    echo " Removing .google_authenticator files:"
     echo "$FOUND_FILES"
     find /home /root -name ".google_authenticator" -exec rm -f {} \;
     echo "Cleanup complete."
