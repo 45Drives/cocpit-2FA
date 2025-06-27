@@ -2,7 +2,7 @@
     "schema_version": "45D_AP_V2.0",
     "name": "cockpit-2fa",
     "title": "2FA module",
-    "stable": false,
+    "stable": true,
     "version": "1.1.0",
     "build_number": "8",
     "author": "Rachit Hans <rhans@45drives.com>",
@@ -65,8 +65,10 @@
         "urgency": "medium",
         "version": "1.1.0",
         "build_number": "8",
-        "date": null,
+        "date": "2025-06-27T13:24:34.200133",
         "packager": "Rachit Hans <rhans@45drives.com>",
-        "changes": []
+        "changes": [
+            "Releasing to stable branch"
+        ]
     }
 }
